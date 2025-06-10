@@ -1,43 +1,34 @@
 package br.com.hash;
 
-import java.io.IOException;
-import java.util.*;
-
 public class Main {
-    public static void main(String[] args) throws IOException {
-        final int CAPACIDADE = 32;
-        List<String> nomes = Loader.carregarNomes("/female_names.txt");
+    public static void main(String[] args) {
+        int capacidade = 32;
+        String[] nomes = LeitorArquivo.ler("nomes.txt", 5000);
 
-        TabelaHash t1 = new TabelaHashFuncao1(CAPACIDADE);
-        TabelaHash t2 = new TabelaHashFuncao2(CAPACIDADE);
+        TabelaHashAbstrata hash1 = new TabelaHashDivisao(capacidade);
+        long inicio1 = System.nanoTime();
+        for (String nome : nomes) {
+            if (nome != null) hash1.inserir(nome);
+        }
+        long tempo1 = System.nanoTime() - inicio1;
 
-        long inicioIns1 = System.nanoTime();
-        for (String nome : nomes) t1.inserir(nome);
-        long tempoIns1 = System.nanoTime() - inicioIns1;
+        TabelaHashAbstrata hash2 = new TabelaHashPolinomial(capacidade);
+        long inicio2 = System.nanoTime();
+        for (String nome : nomes) {
+            if (nome != null) hash2.inserir(nome);
+        }
+        long tempo2 = System.nanoTime() - inicio2;
 
-        long inicioIns2 = System.nanoTime();
-        for (String nome : nomes) t2.inserir(nome);
-        long tempoIns2 = System.nanoTime() - inicioIns2;
+        System.out.println("Hash Divisao - Colisões: " + hash1.getColisoes() + ", Tempo: " + tempo1 / 1e6 + " ms");
+        imprimirDistribuicao(hash1.getDistribuicao());
 
-        long inicioBus1 = System.nanoTime();
-        for (String nome : nomes) t1.buscar(nome);
-        long tempoBus1 = System.nanoTime() - inicioBus1;
+        System.out.println("Hash Polinomial - Colisões: " + hash2.getColisoes() + ", Tempo: " + tempo2 / 1e6 + " ms");
+        imprimirDistribuicao(hash2.getDistribuicao());
+    }
 
-        long inicioBus2 = System.nanoTime();
-        for (String nome : nomes) t2.buscar(nome);
-        long tempoBus2 = System.nanoTime() - inicioBus2;
-
-        long col1 = t1.getColisoes(), col2 = t2.getColisoes();
-        int[] dist1 = t1.getDistribuicao(), dist2 = t2.getDistribuicao();
-
-        System.out.println("=== Tabela 1: Função (len-1) — Encadeamento Exterior ===");
-        System.out.printf("Colisões: %d%nTempo inserção: %d ns%nTempo busca: %d ns%n",
-                          col1, tempoIns1, tempoBus1);
-        System.out.println("Distribuição por bucket: " + Arrays.toString(dist1));
-
-        System.out.println("\n=== Tabela 2: Função (soma chars) — Encadeamento Exterior ===");
-        System.out.printf("Colisões: %d%nTempo inserção: %d ns%nTempo busca: %d ns%n",
-                          col2, tempoIns2, tempoBus2);
-        System.out.println("Distribuição por bucket: " + Arrays.toString(dist2));
+    public static void imprimirDistribuicao(int[] dist) {
+        for (int i = 0; i < dist.length; i++) {
+            System.out.println("Bucket " + i + ": " + dist[i] + " elementos");
+        }
     }
 }
